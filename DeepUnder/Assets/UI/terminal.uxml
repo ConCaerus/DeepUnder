@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Overview" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); justify-content: center; align-self: center;">
+        <ui:VisualElement name="Map" style="flex-grow: 1; background-color: rgb(171, 155, 46); border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); border-left-width: 5px; border-right-width: 5px; border-top-width: 5px; border-bottom-width: 5px; align-self: flex-end; width: 500%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; align-items: stretch; justify-content: flex-start;" />
+        <ui:Button text="Play" display-tooltip-when-elided="true" name="PlayButton" style="padding-left: 25px; padding-right: 25px; padding-top: 25px; padding-bottom: 25px;" />
+    </ui:VisualElement>
+</ui:UXML>
