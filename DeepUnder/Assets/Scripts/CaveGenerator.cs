@@ -5,12 +5,13 @@ using UnityEngine;
 
 public class CaveGenerator : MonoBehaviour {
     [SerializeField] GameObject playerObj;
+    [SerializeField] GameObject ropePrefab;
     [SerializeField] Transform minimapHolder;
     [SerializeField] List<GameObject> cavePieces = new List<GameObject>();
     [SerializeField] List<GameObject> boulders = new List<GameObject>();
     List<GameObject> createdPieces = new List<GameObject>();
 
-    [SerializeField] List<GameObject> monsters = new List<GameObject>();
+    List<RopeInstance> ropes = new List<RopeInstance>();
 
     int cavePathLength = 10;
     int minCaveLength = 7;
@@ -18,17 +19,34 @@ public class CaveGenerator : MonoBehaviour {
 
     int minMonsterCount = 3;
 
+    /*
     private void Start() {
         generateCave();
-        spawnMonsters();
+        GetComponent<MonsterSpawner>().spawnMonsters();
         FindAnyObjectByType<Minimap>().setup(transform.GetChild(0).gameObject); //  sends the cave to the minimap
     }
 
     void generateCave() {
         caveCount = 1;
 
+        //  checks if there are elegeble spawning segments
+        bool valid = false;
+        foreach(var i in cavePieces) {
+            if(i.GetComponent<CaveSegment>().playerSpawnPos != null) {
+                valid = true;
+                break;
+            }
+        }
+        if(!valid) {
+            Debug.LogError("No valid starting segments!");
+            return;
+        }
+
         //  spawns the first segment
         int rand = Random.Range(0, cavePieces.Count);
+        while(cavePieces[rand].GetComponent<CaveSegment>().playerSpawnPos == null)  //  finds a valid spawning segment
+            rand = Random.Range(0, cavePieces.Count);
+
         var p = Instantiate(cavePieces[rand], transform.GetChild(0));
         p.transform.position = Vector3.zero;
         playerObj.transform.position = p.GetComponent<CaveSegment>().playerSpawnPos.position;
@@ -47,13 +65,28 @@ public class CaveGenerator : MonoBehaviour {
 
 
         //  if the cave isn't long enough, start over
+        //return;
         if(caveCount <= minCaveLength) {
             //  destroys everything
             foreach(var i in transform.GetChild(0).GetComponentsInChildren<Renderer>())
                 Destroy(i.gameObject);
+            foreach(var i in ropes)
+                Destroy(i.gameObject);
+            ropes.Clear();
             createdPieces.Clear();
             generateCave();
         }
+
+        //  creates extra bounds for ropes to hit
+        foreach(var i in createdPieces) {
+            var temp = Instantiate(i.gameObject, transform);
+            temp.transform.position = i.transform.position;
+            temp.transform.localScale = i.transform.localScale * 1.01f;
+        }
+
+        //  drops all ropes
+        foreach(var i in ropes)
+            i.dropRope();
     }
 
     void generatePath(GameObject parentSegment, Transform parentEndPoint, int length) {
@@ -73,8 +106,8 @@ public class CaveGenerator : MonoBehaviour {
         parentSegment.layer = LayerMask.NameToLayer("Default");
         p.layer = LayerMask.NameToLayer("Default");
         for(int i = 1; i < pcs.exitPoints.Count; i++) {
-            //  checks for collision
-            if(Physics.CheckCapsule(pcs.exitPoints[i - 1].position, pcs.exitPoints[i].position, 7f, LayerMask.GetMask("Ground"))) {
+            //  checks for collision around the end point
+            if(Physics.CheckSphere(pcs.exitPoints[i].position, p.GetComponent<CaveSegment>().isRoom ? 30f : 10f, LayerMask.GetMask("Ground"))) { 
                 //  destroys the segment
                 Destroy(p.gameObject);
 
@@ -95,6 +128,16 @@ public class CaveGenerator : MonoBehaviour {
         caveCount++;
 
 
+        //  checks if needs to check for a needed rope
+        //  NOTE: rope destroys itself if it determines that it's not needed
+        if(p.GetComponent<CaveSegment>().ropePos != null && Mathf.Abs(p.GetComponent<CaveSegment>().exitPoints[0].position.y - p.GetComponent<CaveSegment>().exitPoints[1].position.y) > 1) {
+            //  checks if a rope is needed
+            var r = Instantiate(ropePrefab.gameObject);
+            r.transform.position = p.GetComponent<CaveSegment>().ropePos.position;
+            ropes.Add(r.GetComponent<RopeInstance>());
+        }
+
+
         //  checks if there needs to be more segments in this path
         if(length > 0) {
             for(int i = 1; i < pcs.exitPoints.Count; i++)
@@ -111,33 +154,10 @@ public class CaveGenerator : MonoBehaviour {
         }
     }
 
-    void spawnMonsters() {
-        List<GameObject> usableSegs = new List<GameObject>();
-        List<GameObject> spawned = new List<GameObject>();
-        var pPos = GameObject.FindGameObjectWithTag("Player").transform.position;
-        int mCount = (int)Random.Range(minMonsterCount, caveCount / 2f);
-        float minDist = 10f;
-
-        //  finds all of the usable monster poses
-        foreach(var i in createdPieces) {
-            //  checks if the segment is usable
-            if(Vector2.Distance(pPos, i.GetComponent<CaveSegment>().monsterSpawnPos.position) > minDist)
-                usableSegs.Add(i.gameObject);
-        }
-
-        //  spawns monsters
-        for(int i = 0; i < mCount; i++) {
-            //  finds a position for the monster
-            var segment = usableSegs[Random.Range(0, usableSegs.Count)];
-            usableSegs.Remove(segment);
-
-            //  spawns the monster at the position
-            var m = Instantiate(monsters[Random.Range(0, monsters.Count)].gameObject, segment.GetComponent<CaveSegment>().monsterSpawnPos);
-            m.transform.localPosition = Vector3.zero;
-            m.transform.localRotation = Quaternion.identity;
-            m.transform.parent = null;
-
-            spawned.Add(m.gameObject);
-        }
+    public Vector3 getRandomCavePos() {
+        return createdPieces[Random.Range(0, createdPieces.Count)].transform.position;
     }
+    public List<GameObject> getSegments() {
+        return createdPieces;
+    }*/
 }

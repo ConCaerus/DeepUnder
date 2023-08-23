@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System.Linq;
+using Unity.VisualScripting;
+using System.Reflection;
 
 public class Minimap : MonoBehaviour {
     GameObject map, pDot;
@@ -32,6 +35,7 @@ public class Minimap : MonoBehaviour {
         //      CREATES THE MAP
         map = Instantiate(cave.gameObject, holder);
 
+
         //  corrects position and scale
         //map.transform.localPosition = Vector3.zero;
         map.transform.localScale = new Vector3(minimapScale, minimapScale, minimapScale);
@@ -59,12 +63,47 @@ public class Minimap : MonoBehaviour {
 
     private void LateUpdate() {
         if(showing) {
+            hideUnwantedLevels();
             movePlayerDot();
             moveMonsterDots();
-            var target = pDot.transform.localPosition - startingPos;
-            var realTarget = new Vector3(-target.x, -target.z, yOffset);
-            transform.localPosition = realTarget;
+            adjustMapPos();
+        }
+    }
 
+    void adjustMapPos() {
+        var target = pDot.transform.localPosition - startingPos;
+        var realTarget = new Vector3(-target.x, -target.z, yOffset);
+        transform.localPosition = realTarget;
+        holder.transform.localPosition = new Vector3(0f, -playerObj.transform.position.y * minimapScale * 2f, 0f);
+    }
+
+    void hideUnwantedLevels() {
+        foreach(var i in map.GetComponentsInChildren<Renderer>()) {
+            var horzPass = Vector3.Distance(pDot.transform.position, i.transform.position) < 20f * minimapScale;
+            var vertPass = Mathf.Abs(pDot.transform.position.y - i.transform.position.y) < 5f * minimapScale;   //  harsher for the Y
+            var show = horzPass && vertPass;
+
+            //  show
+            if(show && i.material.color == Color.clear) {
+                i.material.DOKill();
+                i.material.DOColor(mipMat.color, .25f);
+            }
+
+            //  hide
+            else if(!show && i.material.color == mipMat.color) {
+                i.material.DOKill();
+                i.material.DOColor(Color.clear, .25f);
+            }
+        }
+    }
+    public void hardHideUnwantedLevels() {
+        foreach(var i in map.GetComponentsInChildren<Renderer>()) {
+            i.material.DOKill();
+            var horzPass = Vector3.Distance(pDot.transform.position, i.transform.position) < 20f * minimapScale;
+            var vertPass = Mathf.Abs(pDot.transform.position.y - i.transform.position.y) < 5f * minimapScale;   //  harsher for the Y
+            var show = horzPass && vertPass;
+
+            i.material.color = show ? mipMat.color : Color.clear;
         }
     }
 
@@ -81,6 +120,8 @@ public class Minimap : MonoBehaviour {
 
     public void toggleMinimap(bool b) {
         holder.gameObject.SetActive(b);
+        if(b)
+            hardHideUnwantedLevels();
         showing = b;
     }
 

@@ -30,12 +30,9 @@ public class PlayerController : MonoBehaviour {
     Coroutine stander = null;
     Coroutine mapper = null;
 
-    Quaternion camHolderOriginal;
-
     private void Start() {
         DOTween.Init();
         cc = GetComponent<CharacterController>();
-        camHolderOriginal = camHolder.transform.rotation;
         controls = new InputMaster();
         controls.Enable();
         controls.Player.Jump.performed += ctx => jumpManager();
@@ -85,12 +82,12 @@ public class PlayerController : MonoBehaviour {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
     void crouch() {
-        transform.DOScaleY(crouchSize, .15f);
+        transform.DOScale(crouchSize, .15f);
         crouching = true;
     }
     void unCrouch() {
         if(canStand) {
-            transform.DOScaleY(standSize, .25f);
+            transform.DOScale(standSize, .25f);
             crouching = false;
         }
         else if(stander == null) {
